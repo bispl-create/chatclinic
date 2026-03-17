@@ -1,77 +1,32 @@
 # ChatClinic
 
-Interactive workspace scaffold for clinical tabular data and medical imaging review.
+Skill- and tool-driven clinical data and medical imaging analysis workspace.
 
-This project is the recommended next-step sibling of `ChatGenome`:
+![ChatClinic UI preview](docs/chatclinic-ui-preview.svg)
 
-- keep the same high-level `Sources / Chat / Studio` product concept
-- reuse grounded-chat and Studio-card ideas
-- replace genomics-specific services with clinical data and imaging pipelines
-- keep domain logic separated from `ChatGenome`
+## What it is
 
-## Why this is a separate project
+`ChatClinic` is a multimodal review workspace for:
 
-Do not continue by copying all of `ChatGenome` and editing in place.
+- clinical CSV/TSV and Excel eCRF tables
+- FHIR JSON/XML/NDJSON
+- HL7 v2 message files
+- plain-text clinical notes
+- DICOM medical imaging files
 
-Use a new project when:
+The application uses a `Sources / Chat / Studio` layout and is designed around:
 
-- the domain changes from genomics VCF review to clinical data and imaging
-- different datasets, privacy rules, and workflows apply
-- you want to preserve `ChatGenome` as a stable genomics product
+- a shared orchestration Skill
+- a tool registry
+- a shared runner
+- Studio artifacts rendered from tool outputs
 
-## Initial structure
+## Read first
 
-```text
-clinical_multimodal_workspace/
-  README.md
-  CONTRIBUTING.md
-  HANDOFF.md
-  architecture.md
-  .env.example
-  .gitignore
-  app/
-    main.py
-    services/
-  webapp/
-    package.json
-    tsconfig.json
-    next.config.mjs
-    app/
-      layout.tsx
-      page.tsx
-      globals.css
-  skills/
-    chatclinic-dev/
-      SKILL.md
-```
+- [Course tool contract](docs/COURSE_TOOLS.md)
+- [Tool plugin guide](docs/TOOL_PLUGIN_GUIDE.md)
 
-## Reuse from ChatGenome
-
-Safe to reuse:
-
-- 3-column workspace pattern
-- chat panel concept
-- Studio card concept
-- environment variable pattern
-- contributor and handoff docs
-- grounded explanation workflow
-
-Do not directly reuse as-is:
-
-- VCF upload logic
-- `pysam`, IGV, ClinVar, ROH, VEP, SnpEff, gnomAD code
-- genomics-specific Studio cards
-
-## Suggested next build order
-
-1. Define supported inputs:
-   - clinical tables
-   - CSV/TSV/Excel
-   - DICOM or image series
-2. Build deterministic parsing and QC first
-3. Add grounded summary generation second
-4. Add Studio cards for modality-specific review
-5. Add follow-up chat only after the deterministic outputs exist
+If you are a collaborator or student team adding a new tool, start with those two files first.
 
 ## Quick start
 
@@ -88,19 +43,23 @@ OPENAI_WORKFLOW_MODEL=gpt-5-nano
 OPENAI_MODEL=gpt-5-mini
 ```
 
-## Classroom plugin workflow
+## Core architecture
 
-`ChatClinic` can now discover classroom tools from the local `plugins/` folder and run them through a shared runner.
+- `ChatClinic` provides the shared UI and review experience
+- `skills/chatclinic-orchestrator/` contains the orchestration policy
+- `plugins/` contains executable tools
+- `app/services/tool_runner.py` runs registered tools through a shared runner
+- `Studio` renders structured outputs returned by tools
+
+## Classroom plugin workflow
 
 Recommended teaching model:
 
 - the instructor runs one shared `ChatClinic`
 - each student team submits one plugin folder
-- students do **not** need to submit a separate Skill by default
-- the common orchestration Skill is maintained centrally by the instructor/platform
-- `ChatClinic` discovers the submitted tools and asks for approval before running them
-- tool outputs are returned as Studio artifacts
-- if a new tool changes routing or policy, the instructor also updates the orchestration Skill
+- students do not need to submit a separate Skill by default
+- the orchestration Skill is maintained centrally
+- if a new tool changes routing or policy, the Skill should also be reviewed
 
 Expected plugin layout:
 
@@ -111,44 +70,40 @@ plugins/
     run.py
 ```
 
-Runtime contract:
+Current examples:
 
-- `tool.json` declares the tool name, team, modality, and task type
-- `run.py` is called with:
-  - `--input /path/to/input.json`
-  - `--output /path/to/output.json`
-- the output JSON should contain:
-  - `summary`
-  - `artifacts`
-  - `provenance`
-
-See:
-
-- `docs/COURSE_TOOLS.md`
-- `docs/TOOL_PLUGIN_GUIDE.md`
 - `plugins/cohort_sheet_browser/`
+- `plugins/dicom_review_tool/`
+- `plugins/fhir_browser_tool/`
 
-## What students submit
+## Student deliverable model
 
-For the standard class assignment, student teams should submit:
+Student teams usually submit:
 
 - `tool.json`
 - `run.py`
-- optional supporting files such as model weights, helper scripts, and `requirements.txt`
+- optional helper scripts, model weights, and `requirements.txt`
 
-They usually should **not** submit:
+Student teams usually do not submit:
 
 - a separate orchestration Skill
 - a separate always-on tool server
-- a separate web UI
+- a separate frontend
 
-The expected model is:
+## Included example data
 
-- `ChatClinic` = shared UI and orchestrator
-- student team = tool/plugin implementation
+The repository includes sample files for local testing under `examples/`, including:
 
-## Relationship to ChatGenome
+- cohort Excel files
+- FHIR JSON/XML and bulk NDJSON
+- HL7 message samples
+- chest X-ray and DICOM examples
 
-`ChatGenome` remains the genomics product.
+## Key project files
 
-This workspace is the starting point for a broader clinical and imaging platform with a similar frontend concept but a different backend domain model.
+- `app/main.py`
+- `app/services/tool_runner.py`
+- `app/services/skill_orchestrator.py`
+- `skills/chatclinic-orchestrator/SKILL.md`
+- `docs/COURSE_TOOLS.md`
+- `docs/TOOL_PLUGIN_GUIDE.md`

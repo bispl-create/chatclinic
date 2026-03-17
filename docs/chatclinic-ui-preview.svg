@@ -1,0 +1,86 @@
+<svg width="1440" height="860" viewBox="0 0 1440 860" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFE6FF"/>
+      <stop offset="1" stop-color="#F8F1FF"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1440" height="860" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#BFAFE6" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <rect width="1440" height="860" fill="url(#bg)"/>
+  <g filter="url(#shadow)">
+    <rect x="20" y="96" width="340" height="690" rx="30" fill="white" fill-opacity="0.88"/>
+    <rect x="382" y="96" width="692" height="690" rx="30" fill="white" fill-opacity="0.9"/>
+    <rect x="1096" y="96" width="324" height="690" rx="30" fill="white" fill-opacity="0.88"/>
+    <rect x="20" y="806" width="1400" height="34" rx="17" fill="white" fill-opacity="0.62"/>
+  </g>
+
+  <g>
+    <rect x="34" y="34" width="56" height="56" rx="18" fill="white" fill-opacity="0.7"/>
+    <path d="M62 42V48" stroke="#131A28" stroke-width="3.4" stroke-linecap="round"/>
+    <rect x="42" y="48" width="40" height="24" rx="9" stroke="#131A28" stroke-width="3.4"/>
+    <path d="M42 56H38C36.8954 56 36 56.8954 36 58V62C36 63.1046 36.8954 64 38 64H42" stroke="#131A28" stroke-width="3.4"/>
+    <path d="M82 56H86C87.1046 56 88 56.8954 88 58V62C88 63.1046 87.1046 64 86 64H82" stroke="#131A28" stroke-width="3.4"/>
+    <circle cx="54" cy="60" r="2.8" fill="#131A28"/>
+    <circle cx="70" cy="60" r="2.8" fill="#131A28"/>
+    <path d="M50 78V84" stroke="#131A28" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M74 78V84" stroke="#131A28" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M50 84H74C81.1797 84 87 89.8203 87 97V112H37V97C37 89.8203 42.8203 84 50 84Z" stroke="#131A28" stroke-width="3.4"/>
+    <path d="M48 112V101C48 98.7909 49.7909 97 52 97H55V104" stroke="#131A28" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M76 112V101C76 98.7909 74.2091 97 72 97H69V104" stroke="#131A28" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="72" cy="103" r="4.2" stroke="#131A28" stroke-width="3.4"/>
+  </g>
+  <text x="104" y="74" fill="#172433" font-family="Georgia, serif" font-size="54" font-weight="700">ChatClinic</text>
+  <text x="934" y="74" fill="#5F7183" font-family="Arial, sans-serif" font-size="22">Copyright 2026. BISPL@KAIST AI, All rights reserved.</text>
+
+  <text x="52" y="140" fill="#172433" font-family="Arial, sans-serif" font-size="24" font-weight="700">Sources</text>
+  <rect x="52" y="176" width="276" height="66" rx="22" fill="white" stroke="#D9E6F2"/>
+  <text x="100" y="217" fill="#172433" font-family="Arial, sans-serif" font-size="22">+ Add clinical source</text>
+  <text x="52" y="278" fill="#5F7183" font-family="Arial, sans-serif" font-size="19">Attach one or more clinical sources</text>
+  <rect x="52" y="320" width="276" height="132" rx="24" fill="white" stroke="#D9E6F2"/>
+  <text x="74" y="364" fill="#172433" font-family="Arial, sans-serif" font-size="24" font-weight="700">study.xlsx</text>
+  <text x="74" y="400" fill="#5F7183" font-family="Arial, sans-serif" font-size="18">clinical-table</text>
+  <text x="74" y="430" fill="#5F7183" font-family="Arial, sans-serif" font-size="18">grounded summary ready</text>
+  <rect x="52" y="492" width="276" height="246" rx="24" fill="white" fill-opacity="0.65" stroke="#D9E6F2"/>
+  <text x="74" y="530" fill="#172433" font-family="Arial, sans-serif" font-size="24" font-weight="700">Tool Registry</text>
+  <text x="74" y="566" fill="#5F7183" font-family="Arial, sans-serif" font-size="18">Available tools</text>
+  <rect x="74" y="590" width="102" height="38" rx="19" fill="#EEF5FF" stroke="#CFE0EF"/>
+  <text x="92" y="615" fill="#244566" font-family="Courier New, monospace" font-size="18">cohort</text>
+  <rect x="186" y="590" width="90" height="38" rx="19" fill="#EEF5FF" stroke="#CFE0EF"/>
+  <text x="204" y="615" fill="#244566" font-family="Courier New, monospace" font-size="18">fhir</text>
+  <rect x="74" y="648" width="124" height="38" rx="19" fill="#EEF5FF" stroke="#CFE0EF"/>
+  <text x="92" y="673" fill="#244566" font-family="Courier New, monospace" font-size="18">dicom</text>
+
+  <text x="414" y="140" fill="#172433" font-family="Arial, sans-serif" font-size="24" font-weight="700">Chat</text>
+  <rect x="876" y="120" width="170" height="44" rx="22" fill="#EEF2F4"/>
+  <text x="908" y="149" fill="#244566" font-family="Courier New, monospace" font-size="18">Summary ready</text>
+  <text x="420" y="214" fill="#172433" font-family="Arial, sans-serif" font-size="22">This workbook contains 7 non-empty sheet(s), each analyzed as an individual cohort view.</text>
+  <text x="420" y="286" fill="#172433" font-family="Arial, sans-serif" font-size="42" font-weight="700">Sheet overview</text>
+  <text x="420" y="342" fill="#172433" font-family="Arial, sans-serif" font-size="24">• DATA: 10429 rows, 19 columns, mode cohort, subjects 10429</text>
+  <text x="420" y="384" fill="#172433" font-family="Arial, sans-serif" font-size="24">• Neuro_선별: 14481 rows, 38 columns, mode cohort, subjects 7486</text>
+  <text x="420" y="426" fill="#172433" font-family="Arial, sans-serif" font-size="24">• Blood: 50290 rows, 48 columns, mode cohort, subjects 9184</text>
+  <rect x="414" y="688" width="558" height="70" rx="22" fill="white" stroke="#CFE0EF" stroke-width="2"/>
+  <text x="442" y="732" fill="#8A8F99" font-family="Georgia, serif" font-size="22">Ask a follow-up question about the current scaffold...</text>
+  <circle cx="1010" cy="723" r="36" fill="#F97331"/>
+  <text x="997" y="733" fill="white" font-family="Arial, sans-serif" font-size="30">→</text>
+
+  <text x="1128" y="140" fill="#172433" font-family="Arial, sans-serif" font-size="24" font-weight="700">Studio</text>
+  <rect x="1128" y="186" width="120" height="122" rx="22" fill="#EEF4FF" stroke="#D9E6F2"/>
+  <text x="1150" y="228" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">Cohort</text>
+  <text x="1150" y="252" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">Browser</text>
+  <text x="1150" y="284" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">Intake, schema,</text>
+  <text x="1150" y="306" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">and cohort review</text>
+  <rect x="1264" y="186" width="120" height="122" rx="22" fill="#E6F4EF" stroke="#D9E6F2"/>
+  <text x="1286" y="228" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">FHIR</text>
+  <text x="1286" y="252" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">Browser</text>
+  <text x="1286" y="284" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">Patient, meds,</text>
+  <text x="1286" y="306" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">observations</text>
+  <rect x="1128" y="324" width="120" height="122" rx="22" fill="#F8EFD9" stroke="#D9E6F2"/>
+  <text x="1150" y="366" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">DICOM</text>
+  <text x="1150" y="390" fill="#172433" font-family="Arial, sans-serif" font-size="18" font-weight="700">Review</text>
+  <text x="1150" y="422" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">Metadata and</text>
+  <text x="1150" y="444" fill="#5F7183" font-family="Arial, sans-serif" font-size="16">image preview</text>
+  <rect x="1128" y="688" width="256" height="70" rx="22" fill="white" fill-opacity="0.72" stroke="#D9E6F2"/>
+  <text x="1152" y="730" fill="#5F7183" font-family="Arial, sans-serif" font-size="18">Select a Studio card to open</text>
+</svg>
