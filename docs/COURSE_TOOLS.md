@@ -2,7 +2,7 @@
 
 `ChatClinic` can be extended by student teams without running separate servers.
 
-<div style="padding:12px 16px; border-radius:12px; background:#eff6ff; border:2px solid #60a5fa; color:#1d4ed8; margin:16px 0;">
+<div style="padding:12px 16px; border-radius:12px; background:#fff1f2; border:2px solid #fb7185; color:#9f1239; margin:16px 0;">
   <strong>Revision history</strong><br/>
   <strong>March 2026 update:</strong> Tool manifests should now describe CPU/GPU runtime behavior explicitly, and image tools may target DICOM or raster inputs such as PNG/JPG/TIFF.
 </div>
