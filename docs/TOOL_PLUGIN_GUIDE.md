@@ -2,23 +2,34 @@
 
 This guide explains how collaborators and student teams can add a new tool to `ChatClinic`.
 
+<div style="padding:12px 16px; border-radius:12px; background:#ecfeff; border:2px solid #22d3ee; color:#155e75; margin:16px 0;">
+  <strong>Revision history</strong><br/>
+  <strong>March 2026 update:</strong> Plugins should now describe runtime compatibility for CPU/GPU hosts and may target raster image intake in addition to clinical tables, FHIR, DICOM, and notes.
+</div>
+
 ## What to submit
 
-Each team submits one folder under `plugins/`.
+Each team submits one plugin package and one Skill patch proposal.
+
+Recommended final submission structure:
 
 ```text
-plugins/
-  team_name_tool/
+team_name_submission.zip
+  plugin/
     tool.json
     run.py
     README.md
     requirements.txt   # optional
+  skill_update/
+    skill_patch.md
+    skill_rationale.md
 ```
 
 The default class model is:
 
 - `ChatClinic` provides the shared UI, orchestration Skill, and runner
 - collaborators or student teams provide a `tool plugin`
+- collaborators or student teams provide a `Skill patch proposal`
 - teams do not need to operate a separate server
 
 ## Minimal manifest
@@ -50,6 +61,22 @@ Recommended metadata:
 ```
 
 These fields help the orchestration Skill choose tools with less manual hard-coding.
+
+Recommended runtime metadata:
+
+```json
+{
+  "runtime": {
+    "host_compatible": ["cpu", "gpu"],
+    "supported_accelerators": ["cpu"],
+    "preferred_accelerator": "cpu",
+    "requires_gpu": false,
+    "allow_cpu_fallback": true,
+    "estimated_runtime_sec": 10,
+    "notes": "Explain whether the tool only needs CPU, prefers GPU, or requires GPU."
+  }
+}
+```
 
 ## Execution contract
 
@@ -155,6 +182,16 @@ if __name__ == "__main__":
 - Do not write outside the plugin working area unless truly needed.
 - Emit helpful stderr messages when a run fails.
 
+## Supported source families in ChatClinic
+
+Plugins can currently be designed around source families such as:
+
+- clinical tables (`csv`, `tsv`, `xlsx`, `xlsm`, `xls`)
+- FHIR / HL7 clinical messages
+- DICOM medical images
+- raster medical images (`png`, `jpg`, `jpeg`, `tif`, `tiff`)
+- plain-text clinical notes
+
 ## How tools are discovered
 
 `ChatClinic` automatically scans `plugins/*/tool.json`.
@@ -179,7 +216,7 @@ The orchestration Skill uses:
 
 to decide when a tool should be suggested or run.
 
-If your new tool introduces a new analysis path, update:
+If your new tool introduces a new analysis path, propose an update to:
 
 - `/Users/jongcye/Documents/Codex/workspace/clinical_multimodal_workspace/skills/chatclinic-orchestrator/SKILL.md`
 
@@ -203,7 +240,18 @@ Usually you do **not** need to update the Skill when:
 
 ## How to update the Skill
 
-Edit:
+For class submissions, do not submit a full replacement Skill.
+
+Instead, submit:
+
+- `skill_update/skill_patch.md`
+- `skill_update/skill_rationale.md`
+
+The instructor will merge accepted proposals into the master Skill.
+
+## How to update the Skill
+
+Edit or propose changes for:
 
 - `/Users/jongcye/Documents/Codex/workspace/clinical_multimodal_workspace/skills/chatclinic-orchestrator/SKILL.md`
 
@@ -234,6 +282,13 @@ When adding a tool, check these questions:
 - What Studio artifact or card should it produce?
 
 If the answer to any of these changes platform behavior, update the Skill.
+
+## Related documents
+
+- [Course tool contract](COURSE_TOOLS.md)
+- [Skill patch template](SKILL_PATCH_TEMPLATE.md)
+- [Submission site specification](SUBMISSION_SITE_SPEC.md)
+- [Master Skill integration guide](MASTER_SKILL_INTEGRATION.md)
 
 ## Recommended collaborator checklist
 

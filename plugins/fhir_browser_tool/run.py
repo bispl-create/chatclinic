@@ -15,6 +15,7 @@ def main() -> None:
     args = parser.parse_args()
 
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    execution_context = payload.get("execution_context") or {}
     files = payload.get("files") or []
     if not files:
         raise ValueError("fhir_browser_tool requires one or more files")
@@ -40,6 +41,7 @@ def main() -> None:
 
     result = response.model_dump()
     result["used_tools"] = ["fhir_browser_tool"]
+    result["execution_context"] = execution_context
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

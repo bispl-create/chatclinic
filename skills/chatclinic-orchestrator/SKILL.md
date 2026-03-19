@@ -21,7 +21,7 @@ ChatClinic is the orchestrator, not the analyst of record.
 
 ## Initial chat prompt
 
-Upload one clinical CSV/TSV file, FHIR JSON/XML/NDJSON, HL7 message files, plain-text clinical notes, or DICOM files. ChatClinic will generate a deterministic first-pass summary and open the matching Studio cards.
+Upload one clinical CSV/TSV file, FHIR JSON/XML/NDJSON, HL7 message files, plain-text clinical notes, DICOM files, or PNG/JPG/TIFF raster medical images. ChatClinic will generate a deterministic first-pass summary and open the matching Studio cards.
 
 Always prefer this sequence:
 
@@ -156,6 +156,28 @@ Today the main classroom/core analysis path is:
 1. `cohort_analysis_tool`
 2. `fhir_browser_tool`
 3. `dicom_review_tool`
+4. `image_review_tool`
+
+## Raster image rule
+
+For PNG, JPG, JPEG, and TIFF uploads, prefer `image_review_tool` as the default safe first-pass tool.
+
+Use `image_review_tool` when:
+
+- the uploaded source is a non-DICOM raster medical image
+- the user asks about an uploaded PNG/JPG/TIFF image
+- the system needs preview, size, color space, or lightweight modality hints before choosing a downstream tool
+
+Preferred raster sequence:
+
+1. `image_review_tool`
+2. a domain-specific image tool chosen by the user request or modality hint
+
+Examples:
+
+- PNG chest X-ray -> `image_review_tool`, then chest-xray classifier or segmentation tool
+- TIFF pathology image -> `image_review_tool`, then pathology review tool
+- JPG ultrasound frame -> `image_review_tool`, then ultrasound analysis tool
 
 As more tools are added, the orchestrator should choose among them by registry metadata and question context.
 

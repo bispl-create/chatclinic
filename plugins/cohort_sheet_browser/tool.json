@@ -34,5 +34,14 @@
   "ui_card": "Cohort Browser",
   "priority": 90,
   "owner": "chatclinic-core",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "runtime": {
+    "host_compatible": ["cpu", "gpu"],
+    "supported_accelerators": ["cpu"],
+    "preferred_accelerator": "cpu",
+    "requires_gpu": false,
+    "allow_cpu_fallback": true,
+    "estimated_runtime_sec": 10,
+    "notes": "Runs on either a CPU host or a GPU host, but does not require GPU acceleration."
+  }
 }

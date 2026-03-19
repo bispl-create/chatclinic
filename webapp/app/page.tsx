@@ -41,6 +41,8 @@ type ToolInfo = {
   modality?: string | null;
   approval_required?: boolean;
   description?: string | null;
+  runtime?: Record<string, unknown> | null;
+  execution?: Record<string, unknown> | null;
 };
 
 type ToolRunResponse = {
@@ -233,6 +235,18 @@ type DicomMetadataItem = {
       label?: string;
     }
   >;
+};
+
+type ImageReviewArtifact = {
+  modality_hint?: string;
+  next_tools?: string[];
+  preview?: {
+    available: boolean;
+    image_data_url: string | null;
+    message: string;
+  };
+  metadata?: Record<string, unknown>;
+  metadata_items?: Array<Record<string, unknown>>;
 };
 
 function renderMetadataRows(rows: Array<{ label: string; value: string | undefined | null }>) {
@@ -1315,6 +1329,62 @@ export default function Page() {
       );
     }
 
+    if (activeBaseView === "image_review") {
+      const imageReview = (getSourceArtifact("image_review", activeSourceIndex) as ImageReviewArtifact | undefined) ?? {};
+      const metadata = (getSourceArtifact("metadata", activeSourceIndex) as Record<string, unknown> | undefined) ?? {};
+      const preview = (imageReview.preview ?? metadata.preview) as
+        | {
+            available?: boolean;
+            image_data_url?: string | null;
+            message?: string;
+          }
+        | undefined;
+      const metadataItems = asArray<Record<string, unknown>>((imageReview.metadata_items ?? metadata.items) as unknown);
+      return (
+        <div className="artifactStack">
+          <article className="artifactCard">
+            <strong>Image review</strong>
+            {preview?.available && preview.image_data_url ? (
+              <img src={preview.image_data_url} alt="Raster medical image preview" className="dicomPreview" />
+            ) : (
+              <div className="dicomPreviewPlaceholder">{preview?.message ?? "Preview not available"}</div>
+            )}
+            <p>Modality hint: {imageReview.modality_hint ?? "general-raster-medical-image"}</p>
+            <p>Suggested next tools: {(imageReview.next_tools ?? []).join(", ") || "None suggested"}</p>
+          </article>
+          {metadataItems.length ? (
+            <div className="artifactStack">
+              {metadataItems.map((item, index) => (
+                <article key={`image-metadata-${index}`} className="artifactCard">
+                  <strong>{String(item.file_name ?? `image-${index + 1}`)}</strong>
+                  {renderMetadataRows([
+                    { label: "Format", value: item.file_format as string | undefined },
+                    { label: "Mode", value: item.mode as string | undefined },
+                    { label: "Width", value: item.width == null ? "n/a" : String(item.width) },
+                    { label: "Height", value: item.height == null ? "n/a" : String(item.height) },
+                    { label: "Channels", value: item.channels == null ? "n/a" : String(item.channels) },
+                    { label: "Color space", value: item.color_space as string | undefined },
+                  ])}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <article className="artifactCard">
+              <strong>Metadata overview</strong>
+              {renderMetadataRows([
+                { label: "Format", value: metadata.file_format as string | undefined },
+                { label: "Mode", value: metadata.mode as string | undefined },
+                { label: "Width", value: metadata.width == null ? "n/a" : String(metadata.width) },
+                { label: "Height", value: metadata.height == null ? "n/a" : String(metadata.height) },
+                { label: "Channels", value: metadata.channels == null ? "n/a" : String(metadata.channels) },
+                { label: "Color space", value: metadata.color_space as string | undefined },
+              ])}
+            </article>
+          )}
+        </div>
+      );
+    }
+
     if (activeBaseView === "series") {
       const series = (getSourceArtifact("series", activeSourceIndex) as DicomSeriesArtifact | undefined)?.series ?? [];
       if (!series.length) {
@@ -2267,7 +2337,7 @@ export default function Page() {
             <div className="leftPanelBody">
               <label className="uploadButton">
                 + Add clinical source
-                <input type="file" accept=".csv,.tsv,.xlsx,.xls,.xlsm,.json,.xml,.ndjson,.hl7,.txt,.dcm,.dicom" multiple onChange={handleFileChange} />
+                <input type="file" accept=".csv,.tsv,.xlsx,.xls,.xlsm,.json,.xml,.ndjson,.hl7,.txt,.dcm,.dicom,.png,.jpg,.jpeg,.tif,.tiff" multiple onChange={handleFileChange} />
               </label>
               {attachedFiles.length ? (
                 <div className="sourceStack">
@@ -2279,7 +2349,7 @@ export default function Page() {
                   ))}
                 </div>
               ) : (
-                <p className="mutedText">Attach one or more clinical sources: CSV/TSV or Excel eCRF tables, FHIR JSON/XML/NDJSON, HL7 messages, plain-text notes, or DICOM files from the same patient/study.</p>
+                <p className="mutedText">Attach one or more clinical sources: CSV/TSV or Excel eCRF tables, FHIR JSON/XML/NDJSON, HL7 messages, plain-text notes, DICOM files, or PNG/JPG/TIFF raster medical images from the same patient/study.</p>
               )}
               <div className="statusBlock">
                 <span>Status</span>

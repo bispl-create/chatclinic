@@ -102,6 +102,8 @@ class ToolInfo(BaseModel):
     modality: Optional[str] = None
     approval_required: bool = True
     description: Optional[str] = None
+    runtime: Optional[dict[str, Any]] = None
+    execution: Optional[dict[str, Any]] = None
 
 
 class ToolListResponse(BaseModel):
@@ -367,6 +369,7 @@ def list_tools() -> ToolListResponse:
             modality=tool.get("modality"),
             approval_required=bool(tool.get("approval_required", True)),
             description=tool.get("description"),
+            runtime=dict(tool.get("runtime", {}) or {}),
         )
         for tool in discover_tools()
         if tool.get("name")
@@ -392,6 +395,7 @@ def suggest_registered_tool(request: ToolSuggestRequest) -> ToolSuggestionRespon
             modality=tool_payload.get("modality"),
             approval_required=bool(tool_payload.get("approval_required", True)),
             description=tool_payload.get("description"),
+            runtime=dict(tool_payload.get("runtime", {}) or {}),
         ),
         rationale=suggestion.get("rationale"),
     )
@@ -426,6 +430,8 @@ def execute_tool(request: ToolRunRequest) -> ToolRunResponse:
             modality=tool_meta.get("modality"),
             approval_required=bool(tool_meta.get("approval_required", True)),
             description=None,
+            runtime=dict(tool_meta.get("runtime", {}) or {}),
+            execution=dict(tool_meta.get("execution", {}) or {}),
         ),
         summary=str(result_payload.get("summary", "Tool completed.")),
         artifacts=dict(result_payload.get("artifacts", {}) or {}),
@@ -441,6 +447,8 @@ def _guess_modality(filename: str) -> tuple[str, str]:
         return "clinical-table", suffix.lstrip(".")
     if suffix in {".dcm", ".dicom"}:
         return "medical-image", suffix.lstrip(".")
+    if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff"}:
+        return "medical-image", suffix.lstrip(".")
     if suffix in {".json", ".xml", ".hl7", ".ndjson"}:
         return "clinical-message", suffix.lstrip(".")
     if suffix in {".txt"}:
@@ -451,6 +459,14 @@ def _guess_modality(filename: str) -> tuple[str, str]:
     if suffix in {".md", ".text"}:
         return "clinical-note", suffix.lstrip(".")
     return "unknown", suffix.lstrip(".") or "unknown"
+
+
+def _is_dicom_suffix(suffix: str) -> bool:
+    return suffix.lower() in {"dcm", "dicom"}
+
+
+def _is_raster_image_suffix(suffix: str) -> bool:
+    return suffix.lower() in {"png", "jpg", "jpeg", "tif", "tiff"}
 
 
 def _looks_like_hl7_v2(decoded: str) -> bool:
@@ -2387,6 +2403,177 @@ def _summarize_dicom(file_name: str, raw: bytes, suffix: str, source_path: Optio
     )
 
 
+def _infer_raster_modality_hint(file_name: str, suffix: str) -> tuple[str, list[str]]:
+    lowered = file_name.lower()
+    if any(token in lowered for token in ["cxr", "xray", "x-ray", "chest"]):
+        return "chest-xray-like", ["cxr_classification_tool", "cxr_segmentation_tool"]
+    if any(token in lowered for token in ["fundus", "retina", "oct"]):
+        return "ophthalmic-image-like", ["fundus_analysis_tool"]
+    if any(token in lowered for token in ["path", "slide", "wsi", "histo", "micro"]):
+        return "pathology-or-microscopy-like", ["pathology_review_tool"]
+    if suffix.lower() in {"tif", "tiff"}:
+        return "pathology-or-microscopy-like", ["pathology_review_tool"]
+    if any(token in lowered for token in ["ultrasound", "us", "echo"]):
+        return "ultrasound-like", ["ultrasound_review_tool"]
+    return "general-raster-medical-image", []
+
+
+def _build_raster_preview(raw: bytes) -> dict[str, Any]:
+    if Image is None:
+        return {"available": False, "image_data_url": None, "message": "Preview not available"}
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            image.load()
+            preview_image = image.copy()
+            if preview_image.mode not in {"L", "RGB"}:
+                preview_image = preview_image.convert("RGB")
+            preview_image.thumbnail((1024, 1024))
+            buffer = io.BytesIO()
+            preview_image.save(buffer, format="PNG")
+            encoded = base64.b64encode(buffer.getvalue()).decode("ascii")
+            return {
+                "available": True,
+                "image_data_url": f"data:image/png;base64,{encoded}",
+                "message": "Preview generated",
+            }
+    except Exception as exc:
+        return {
+            "available": False,
+            "image_data_url": None,
+            "message": f"Preview not available: {exc}",
+        }
+
+
+def _read_raster_metadata(file_name: str, raw: bytes, suffix: str, source_path: Optional[str] = None) -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "file_name": file_name,
+        "file_format": suffix.upper(),
+        "width": "not available",
+        "height": "not available",
+        "channels": "not available",
+        "mode": "not available",
+        "color_space": "not available",
+        "source_file_path": source_path,
+        "preview": {"available": False, "image_data_url": None, "message": "Preview not available"},
+    }
+    preview = _build_raster_preview(raw)
+    metadata["preview"] = preview
+    if Image is None:
+        return metadata
+    try:
+        with Image.open(io.BytesIO(raw)) as image:
+            image.load()
+            bands = list(image.getbands() or [])
+            metadata.update(
+                {
+                    "width": image.width,
+                    "height": image.height,
+                    "channels": len(bands) if bands else "not available",
+                    "mode": image.mode,
+                    "color_space": "grayscale" if image.mode == "L" else "color",
+                }
+            )
+    except Exception:
+        pass
+    return metadata
+
+
+def _summarize_raster_image(file_name: str, raw: bytes, suffix: str, source_path: Optional[str] = None) -> IntakeSummaryResponse:
+    metadata = _read_raster_metadata(file_name, raw, suffix, source_path=source_path)
+    modality_hint, next_tools = _infer_raster_modality_hint(file_name, suffix)
+    width = metadata.get("width", "not available")
+    height = metadata.get("height", "not available")
+    color_space = metadata.get("color_space", "not available")
+    summary = (
+        f"This imaging source was recognized as a raster medical image ({suffix.upper()}). "
+        f"Detected canvas size is {width} x {height}, color space is {color_space}, and the current modality hint is {modality_hint}. "
+        "This first-pass review should be followed by domain-specific image analysis or interpretation tools."
+    )
+    return IntakeSummaryResponse(
+        source=UploadedSourceSummary(
+            file_name=file_name,
+            file_type=suffix,
+            modality="medical-image",
+            size_bytes=len(raw),
+            status="parsed",
+        ),
+        grounded_summary=summary,
+        studio_cards=[
+            {
+                "id": "image_review",
+                "title": "Image Review",
+                "subtitle": "Raster metadata and preview",
+            }
+        ],
+        artifacts={
+            "qc": {
+                "file_size_bytes": len(raw),
+                "readable": bool(metadata.get("preview", {}).get("available", False)),
+                "color_space": metadata.get("color_space", "not available"),
+            },
+            "metadata": metadata,
+            "image_review": {
+                "modality_hint": modality_hint,
+                "next_tools": next_tools,
+                "preview": metadata.get("preview"),
+                "metadata": metadata,
+            },
+        },
+        sources=[],
+    )
+
+
+def _summarize_raster_image_group(files: list[tuple[str, bytes, str, str]]) -> IntakeSummaryResponse:
+    items = [_read_raster_metadata(file_name, raw, suffix, source_path) for file_name, raw, suffix, source_path in files]
+    lead = items[0] if items else {}
+    hints = [_infer_raster_modality_hint(item["file_name"], str(item["file_format"]).lower())[0] for item in items]
+    next_tools: list[str] = []
+    for item in items:
+        _, suggested = _infer_raster_modality_hint(item["file_name"], str(item["file_format"]).lower())
+        for tool_name in suggested:
+            if tool_name not in next_tools:
+                next_tools.append(tool_name)
+    summary = (
+        f"This upload includes {len(files)} raster medical image file(s). "
+        f"The lead format is {lead.get('file_format', 'n/a')}, and the dominant modality hint is {hints[0] if hints else 'general-raster-medical-image'}. "
+        "Use the Image Review card to inspect preview state and per-file metadata before running downstream tools."
+    )
+    return IntakeSummaryResponse(
+        source=UploadedSourceSummary(
+            file_name=f"{len(files)} raster images",
+            file_type="mixed-image",
+            modality="medical-image",
+            size_bytes=sum(len(raw) for _, raw, _, _ in files),
+            status="parsed",
+        ),
+        grounded_summary=summary,
+        studio_cards=[
+            {
+                "id": "image_review",
+                "title": "Image Review",
+                "subtitle": "Raster metadata and preview",
+            }
+        ],
+        artifacts={
+            "qc": {
+                "file_count": len(files),
+                "readable_count": sum(1 for item in items if bool((item.get("preview") or {}).get("available", False))),
+            },
+            "metadata": {
+                "items": items,
+                "preview": lead.get("preview"),
+            },
+            "image_review": {
+                "modality_hint": hints[0] if hints else "general-raster-medical-image",
+                "next_tools": next_tools,
+                "preview": lead.get("preview"),
+                "metadata_items": items,
+            },
+        },
+        sources=[],
+    )
+
+
 def _read_dicom_metadata(raw: bytes) -> dict[str, Any]:
     meta: dict[str, Any] = {
         "patient_id": "not available",
@@ -3824,6 +4011,7 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
         raise ValueError("No files were uploaded")
     parsed_responses: list[IntakeSummaryResponse] = []
     dicom_files: list[tuple[str, bytes, str, str]] = []
+    raster_image_files: list[tuple[str, bytes, str, str]] = []
     ndjson_files: list[tuple[str, bytes, str]] = []
 
     for upload in files:
@@ -3878,7 +4066,10 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
             parsed_responses.append(_summarize_clinical_note(file_name, raw, suffix))
         elif modality == "medical-image":
             source_path = _persist_uploaded_file(file_name, raw)
-            dicom_files.append((file_name, raw, suffix, source_path))
+            if _is_dicom_suffix(suffix):
+                dicom_files.append((file_name, raw, suffix, source_path))
+            elif _is_raster_image_suffix(suffix):
+                raster_image_files.append((file_name, raw, suffix, source_path))
 
     if ndjson_files:
         try:
@@ -3925,6 +4116,31 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
             else:
                 parsed_responses.append(_summarize_dicom_series(dicom_files))
 
+    if raster_image_files:
+        try:
+            tool_result = run_tool(
+                "image_review_tool",
+                {
+                    "files": [
+                        {
+                            "file_name": file_name,
+                            "suffix": suffix,
+                            "raw_base64": base64.b64encode(raw).decode("ascii"),
+                            "source_path": source_path,
+                        }
+                        for file_name, raw, suffix, source_path in raster_image_files
+                    ]
+                },
+            )
+            tool_payload = tool_result.get("result", {})
+            parsed_responses.append(IntakeSummaryResponse.model_validate(tool_payload))
+        except Exception:
+            if len(raster_image_files) == 1:
+                file_name, raw, suffix, source_path = raster_image_files[0]
+                parsed_responses.append(_summarize_raster_image(file_name, raw, suffix, source_path=source_path))
+            else:
+                parsed_responses.append(_summarize_raster_image_group(raster_image_files))
+
     if parsed_responses:
         return _merge_responses(parsed_responses)
 
@@ -3933,7 +4149,7 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
     modality, suffix = _guess_modality(first_file.filename or "")
     summary = (
         "The uploaded source was received, but this scaffold currently supports clinical CSV/TSV files, "
-        "FHIR JSON/XML/NDJSON, HL7 messages, plain-text clinical notes, and DICOM uploads only."
+        "FHIR JSON/XML/NDJSON, HL7 messages, plain-text clinical notes, DICOM uploads, and PNG/JPG/TIFF raster images only."
     )
     return IntakeSummaryResponse(
         source=UploadedSourceSummary(
