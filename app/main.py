@@ -450,7 +450,10 @@ def _guess_modality(filename: str) -> tuple[str, str]:
         return "clinical-note", suffix.lstrip(".")
     if suffix in {".md", ".text"}:
         return "clinical-note", suffix.lstrip(".")
+    if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}:
+        return "medical-image", suffix.lstrip(".")
     return "unknown", suffix.lstrip(".") or "unknown"
+
 
 
 def _looks_like_hl7_v2(decoded: str) -> bool:
@@ -2595,6 +2598,57 @@ def _summarize_dicom_series(files: list[tuple[str, bytes, str, str]]) -> IntakeS
     )
 
 
+def _summarize_raster_image(file_name: str, raw: bytes, suffix: str, source_path: Optional[str] = None) -> IntakeSummaryResponse:
+    meta: dict[str, Any] = {
+        "width": "not available",
+        "height": "not available",
+        "mode": "not available",
+        "format": suffix.upper(),
+        "file_size_bytes": len(raw),
+    }
+    preview: dict[str, Any] = {"available": False, "image_data_url": None}
+    try:
+        from PIL import Image as PILImage
+        import io as _io
+        img = PILImage.open(_io.BytesIO(raw))
+        meta["width"] = img.width
+        meta["height"] = img.height
+        meta["mode"] = img.mode
+        meta["format"] = img.format or suffix.upper()
+        img.thumbnail((512, 512))
+        buf = _io.BytesIO()
+        img.save(buf, format="PNG")
+        preview = {
+            "available": True,
+            "image_data_url": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii"),
+        }
+    except Exception:
+        pass
+
+    summary = (
+        f"Raster image '{file_name}' received. "
+        f"Format: {meta['format']}, size: {meta.get('width', '?')} x {meta.get('height', '?')} px, "
+        f"color mode: {meta['mode']}. File size: {len(raw):,} bytes."
+    )
+    return IntakeSummaryResponse(
+        source=UploadedSourceSummary(
+            file_name=file_name,
+            file_type=suffix,
+            modality="medical-image",
+            size_bytes=len(raw),
+            status="parsed",
+        ),
+        grounded_summary=summary,
+        studio_cards=[{"id": "metadata", "title": "Image Review", "subtitle": "Metadata and preview"}],
+        artifacts={
+            "metadata": {**meta, "source_file_path": source_path, "preview": preview},
+            "qc": {"file_size_bytes": len(raw)},
+        },
+        sources=[],
+    )
+
+
+
 def _prefixed_response(response: IntakeSummaryResponse, source_index: int) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     prefixed_cards: list[dict[str, Any]] = []
     prefixed_artifacts: dict[str, Any] = {}
@@ -3823,6 +3877,7 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
     if not files:
         raise ValueError("No files were uploaded")
     parsed_responses: list[IntakeSummaryResponse] = []
+    image_files: list[tuple[str, bytes, str, str]] = []
     dicom_files: list[tuple[str, bytes, str, str]] = []
     ndjson_files: list[tuple[str, bytes, str]] = []
 
@@ -3878,7 +3933,10 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
             parsed_responses.append(_summarize_clinical_note(file_name, raw, suffix))
         elif modality == "medical-image":
             source_path = _persist_uploaded_file(file_name, raw)
-            dicom_files.append((file_name, raw, suffix, source_path))
+            if suffix in {"dcm", "dicom"}:
+                dicom_files.append((file_name, raw, suffix, source_path))
+            else:
+                image_files.append((file_name, raw, suffix, source_path))
 
     if ndjson_files:
         try:
@@ -3924,6 +3982,28 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
                 parsed_responses.append(_summarize_dicom(file_name, raw, suffix, source_path=source_path))
             else:
                 parsed_responses.append(_summarize_dicom_series(dicom_files))
+
+    if image_files:
+        try:
+            tool_result = run_tool(
+                "png_intake_tool",
+                {
+                    "files": [
+                        {
+                            "file_name": file_name,
+                            "suffix": suffix,
+                            "raw_base64": base64.b64encode(raw).decode("ascii"),
+                            "source_path": source_path,
+                        }
+                        for file_name, raw, suffix, source_path in image_files
+                    ]
+                },
+            )
+            tool_payload = tool_result.get("result", {})
+            parsed_responses.append(IntakeSummaryResponse.model_validate(tool_payload))
+        except Exception:
+            for file_name, raw, suffix, source_path in image_files:
+                parsed_responses.append(_summarize_raster_image(file_name, raw, suffix, source_path=source_path))
 
     if parsed_responses:
         return _merge_responses(parsed_responses)

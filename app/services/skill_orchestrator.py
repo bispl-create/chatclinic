@@ -84,6 +84,11 @@ def _score_tool(tool: dict[str, Any], question: str, analysis: dict[str, Any], a
         score += 3
         rationale.append("tool modality matches the uploaded source")
 
+    source_suffix = str((analysis.get("source") or {}).get("file_type", "") or "").lower()
+    if source_suffix and keywords and source_suffix in keywords:
+        score += 4
+        rationale.append("uploaded file type matches the tool keywords")
+
     if active_view and recommended_stage and recommended_stage in active_view:
         score += 2
         rationale.append("current Studio context aligns with the recommended stage")
