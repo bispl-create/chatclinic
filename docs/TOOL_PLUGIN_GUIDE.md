@@ -2,10 +2,9 @@
 
 This guide explains how collaborators and student teams can add a new tool to `ChatClinic`.
 
-<div style="padding:12px 16px; border-radius:12px; background:#fff1f2; border:2px solid #fb7185; color:#9f1239; margin:16px 0;">
-  <strong>Revision history</strong><br/>
-  <strong>March 2026 update:</strong> Plugins should now describe runtime compatibility for CPU/GPU hosts and may target raster image intake in addition to clinical tables, FHIR, DICOM, and notes.
-</div>
+> [!IMPORTANT]
+> **Revision history**
+> - **March 2026 update:** Plugins should now describe runtime compatibility for CPU/GPU hosts and may target raster image intake in addition to clinical tables, FHIR, DICOM, and notes.
 
 ## What to submit
 
