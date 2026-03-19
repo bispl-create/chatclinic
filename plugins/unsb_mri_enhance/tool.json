@@ -10,5 +10,6 @@
     "recommended_stage": "post-intake",
     "priority": 90,
     "produces": ["enhanced_image", "comparison"],
-    "consumes": ["medical-image"]
+    "consumes": ["medical-image"],
+    "requires_gpu": true
   }
