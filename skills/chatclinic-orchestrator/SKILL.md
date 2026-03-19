@@ -63,6 +63,8 @@ Ask before running a tool when:
 - the tool changes files or generates persistent artifacts
 - the tool can materially alter interpretation
 - the tool may be slow or expensive
+- the tool requires GPU execution
+- the tool has no CPU fallback and the deployment environment may be constrained
 
 Approval message pattern:
 
@@ -75,6 +77,28 @@ Shall I proceed?
 ```
 
 If the UI already provides approval controls, the chat text should still explain which tool is about to run and why.
+
+## Runtime-aware tool policy
+
+Use runtime metadata from `tool.json` to decide how safely a tool can run on the current host.
+
+Consider these fields:
+
+- `runtime.host_compatible`
+- `runtime.supported_accelerators`
+- `runtime.preferred_accelerator`
+- `runtime.requires_gpu`
+- `runtime.allow_cpu_fallback`
+- `runtime.estimated_runtime_sec`
+
+Preferred runtime behavior:
+
+1. choose CPU-safe tools by default for lightweight first-pass review
+2. choose GPU tools when the task genuinely benefits from GPU acceleration
+3. if a tool requires GPU and no CPU fallback exists, explain that clearly before execution
+4. if multiple tools can solve the same task, prefer the one compatible with the current host and current stage
+
+Do not assume all deployments have GPU access, even if the platform is often hosted on GPU servers.
 
 ## Tool categories
 
@@ -178,6 +202,8 @@ Examples:
 - PNG chest X-ray -> `image_review_tool`, then chest-xray classifier or segmentation tool
 - TIFF pathology image -> `image_review_tool`, then pathology review tool
 - JPG ultrasound frame -> `image_review_tool`, then ultrasound analysis tool
+
+Use raster-image tools to decide which downstream image-specific tool is most appropriate, rather than jumping directly to free-form interpretation.
 
 As more tools are added, the orchestrator should choose among them by registry metadata and question context.
 
