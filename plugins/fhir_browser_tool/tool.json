@@ -25,5 +25,14 @@
   "ui_card": "FHIR Browser",
   "priority": 85,
   "owner": "chatclinic-core",
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "runtime": {
+    "host_compatible": ["cpu", "gpu"],
+    "supported_accelerators": ["cpu"],
+    "preferred_accelerator": "cpu",
+    "requires_gpu": false,
+    "allow_cpu_fallback": true,
+    "estimated_runtime_sec": 8,
+    "notes": "Runs on CPU and on GPU-equipped hosts without requiring GPU acceleration."
+  }
 }

@@ -5,7 +5,7 @@ import base64
 import json
 from pathlib import Path
 
-from app.main import _summarize_dicom, _summarize_dicom_series
+from app.main import _summarize_raster_image, _summarize_raster_image_group
 
 
 def main() -> None:
@@ -18,28 +18,27 @@ def main() -> None:
     execution_context = payload.get("execution_context") or {}
     files = payload.get("files") or []
     if not files:
-        raise ValueError("dicom_review_tool requires one or more files")
+        raise ValueError("image_review_tool requires one or more files")
 
     normalized = []
     for item in files:
-        raw = base64.b64decode(item["raw_base64"])
         normalized.append(
             (
-                str(item.get("file_name", "uploaded-file")),
-                raw,
-                str(item.get("suffix", "dicom")),
+                str(item.get("file_name", "uploaded-image")),
+                base64.b64decode(item["raw_base64"]),
+                str(item.get("suffix", "png")),
                 item.get("source_path"),
             )
         )
 
     if len(normalized) == 1:
         file_name, raw, suffix, source_path = normalized[0]
-        response = _summarize_dicom(file_name, raw, suffix, source_path=source_path)
+        response = _summarize_raster_image(file_name, raw, suffix, source_path=source_path)
     else:
-        response = _summarize_dicom_series(normalized)
+        response = _summarize_raster_image_group(normalized)
 
     result = response.model_dump()
-    result["used_tools"] = ["dicom_review_tool"]
+    result["used_tools"] = ["image_review_tool"]
     result["execution_context"] = execution_context
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 

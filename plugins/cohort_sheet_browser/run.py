@@ -351,6 +351,7 @@ def main() -> int:
     args = parser.parse_args()
 
     payload = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    execution_context = payload.get("execution_context") or {}
     file_name = str(payload.get("file_name") or "workbook.xlsx")
     suffix = str(payload.get("suffix") or "xlsx")
     sheet_tables = list(payload.get("sheet_tables") or [])
@@ -433,6 +434,7 @@ def main() -> int:
             "tool": "cohort_analysis_tool",
             "version": "0.1.0",
             "sheet_count": len(sheet_tables),
+            "execution_context": execution_context,
         },
     }
     Path(args.output).write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")

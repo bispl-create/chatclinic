@@ -2,6 +2,11 @@
 
 Clinical data and medical imaging analysis workspace for teaching and building **Agentic AI**.
 
+<div style="padding:12px 16px; border-radius:12px; background:#fff1f2; border:2px solid #fb7185; color:#9f1239; margin:16px 0;">
+  <strong>Revision history</strong><br/>
+  <strong>March 2026 update:</strong> ChatClinic now supports CPU/GPU-aware tool runtime metadata and first-pass raster medical image intake for <code>PNG</code>, <code>JPG/JPEG</code>, and <code>TIFF</code> via <code>image_review_tool</code>.
+</div>
+
 ![ChatClinic UI preview](docs/chatclinic-ui-preview.svg)
 
 ## Why this project exists
@@ -23,6 +28,7 @@ In this project, the AI may receive:
 - HL7 message files
 - plain-text clinical notes
 - DICOM medical imaging files
+- raster medical images such as PNG, JPG/JPEG, and TIFF
 
 and combine them into a single, grounded workflow.
 
@@ -104,9 +110,11 @@ flowchart LR
     RUN --> T1["Cohort Analysis Tool"]
     RUN --> T2["FHIR Browser Tool"]
     RUN --> T3["DICOM Review Tool"]
+    RUN --> T4["Image Review Tool"]
     T1 --> ART["Structured artifacts"]
     T2 --> ART
     T3 --> ART
+    T4 --> ART
     ART --> UI
     UI --> ANS["Grounded explanation,<br/>reasoning, and next-step response"]
 ```
@@ -160,19 +168,20 @@ Student teams can contribute tools such as:
 
 As long as a tool follows the plugin contract, it can be registered and orchestrated by `ChatClinic`.
 
-## Read first
+## Classroom materials
 
-If you are teaching this system or adding a new classroom tool, read these first:
+The main `ChatClinic` repository should stay focused on the platform itself.
 
-- [Course tool contract](docs/COURSE_TOOLS.md)
-- [Tool plugin guide](docs/TOOL_PLUGIN_GUIDE.md)
+For class signup, plugin submission, and Skill patch workflow, use the separate classroom materials repository:
 
-These documents explain:
+- `chatclinic-class` (recommended separate repo/workspace for students and instructors)
 
-- how students should submit tools
-- what `tool.json` should contain
-- how `run.py` should behave
-- when the orchestration Skill should also be updated
+That classroom repo should contain:
+
+- tool submission rules
+- Skill patch templates
+- signup and final submission forms/specifications
+- instructor merge workflow for the master Skill
 
 ## Core project pieces
 
@@ -194,14 +203,25 @@ Current example tools include:
 - `plugins/cohort_sheet_browser/`
 - `plugins/fhir_browser_tool/`
 - `plugins/dicom_review_tool/`
+- `plugins/image_review_tool/`
 
 Together they demonstrate how one agentic system can support:
 
 - cohort-oriented structured data analysis
 - patient-centered clinical browsing
 - medical image review
+- raster image preview and lightweight modality triage
 
 under one orchestration layer.
+
+## Runtime model for current tools
+
+Current tools are registered with runtime metadata so that the same platform can run on:
+
+- CPU-only hosts
+- GPU-equipped servers
+
+The current built-in tools do not require GPU acceleration, but they now declare runtime compatibility explicitly in `tool.json`. This keeps the current classroom tools simple while allowing future student tools to prefer or require GPU execution without changing the overall orchestration model.
 
 ## Example data
 
@@ -213,6 +233,19 @@ The `examples/` folder includes demo files such as:
 - chest X-ray and DICOM examples
 
 These are intended for both classroom demonstration and student tool development.
+
+## Local companion repo
+
+If you are organizing a course, keep a separate companion repository for course operations, for example:
+
+- `/Users/jongcye/Documents/Codex/workspace/chatclinic-class`
+
+That repo can store:
+
+- team signup instructions
+- plugin submission templates
+- Skill patch proposals
+- instructor review workflow
 
 ## Quick start
 

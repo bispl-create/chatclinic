@@ -163,6 +163,7 @@ def suggest_tool(question: str, analysis: dict[str, Any], active_view: str | Non
             "modality": tool.get("modality"),
             "approval_required": bool(tool.get("approval_required", True)),
             "description": tool.get("description"),
+            "runtime": dict(tool.get("runtime", {}) or {}),
         },
         "rationale": (rationale or "the orchestrator selected the most relevant registered tool") + extra,
     }
