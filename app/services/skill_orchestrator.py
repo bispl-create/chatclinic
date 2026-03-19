@@ -75,9 +75,10 @@ def _score_tool(tool: dict[str, Any], question: str, analysis: dict[str, Any], a
     recommended_stage = str(tool.get("recommended_stage", "") or "")
     tool_name = str(tool.get("name", "") or "")
 
-    if any(keyword and keyword in lowered for keyword in keywords):
-        score += 6
-        rationale.append("question keywords match the tool manifest")
+    keyword_hits = [kw for kw in keywords if kw and kw in lowered]
+    if keyword_hits:
+        score += 6 + 4 * (len(keyword_hits) - 1)
+        rationale.append(f"question keywords match the tool manifest ({', '.join(keyword_hits)})")
 
     modalities = _analysis_modalities(analysis)
     if modality and modality in modalities:

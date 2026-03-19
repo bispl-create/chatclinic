@@ -22,6 +22,7 @@ Output payload:
     }
 """
 
+import base64
 import os
 import sys
 import json
@@ -163,10 +164,27 @@ def main() -> int:
 
     # Defensive: accept multiple payload formats from orchestrator
     image_path = ""
+    # Format 0: source_file_path from artifacts (runtime_uploads absolute path)
+    artifacts = payload.get("analysis_artifacts") or payload.get("artifacts") or {}
+    for _key in ("metadata", "source0::metadata"):
+        meta_block = artifacts.get(_key)
+        if isinstance(meta_block, dict):
+            candidate = meta_block.get("source_file_path", "")
+            if candidate and os.path.isfile(candidate):
+                image_path = candidate
+                break
+            for item in meta_block.get("items") or []:
+                candidate = (item or {}).get("source_file_path", "")
+                if candidate and os.path.isfile(candidate):
+                    image_path = candidate
+                    break
+            if image_path:
+                break
     # Format 1: Plugin Guide standard  {"analysis_source": {"file_name": "..."}}
-    source = payload.get("analysis_source", {})
-    if isinstance(source, dict):
-        image_path = source.get("file_name", "")
+    if not image_path:
+        source = payload.get("analysis_source", {})
+        if isinstance(source, dict):
+            image_path = source.get("file_name", "")
     # Format 2: direct file_name       {"file_name": "..."}
     if not image_path:
         image_path = payload.get("file_name", "")
@@ -234,6 +252,26 @@ def main() -> int:
     comparison = make_comparison(img_input, img_enhanced)
     comparison.save(str(comparison_path))
 
+    # ── Persist to runtime_uploads so files outlive the temp dir ──
+    persist_dir = Path(__file__).resolve().parents[2] / "runtime_uploads" / "unsb_results"
+    persist_dir.mkdir(parents=True, exist_ok=True)
+    import shutil, uuid as _uuid
+    tag = _uuid.uuid4().hex[:8]
+    persist_enhanced = persist_dir / f"{basename}_{tag}_enhanced.png"
+    persist_comparison = persist_dir / f"{basename}_{tag}_comparison.png"
+    shutil.copy2(str(enhanced_path), str(persist_enhanced))
+    shutil.copy2(str(comparison_path), str(persist_comparison))
+
+    # ── Encode images as base64 data URLs for frontend ──
+    import io as _io
+    def _to_data_url(img: Image.Image) -> str:
+        buf = _io.BytesIO()
+        img.save(buf, format="PNG")
+        return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+    enhanced_data_url = _to_data_url(img_enhanced)
+    comparison_data_url = _to_data_url(comparison)
+
     # ── Write output payload ──
     result = {
         "summary": (
@@ -244,12 +282,14 @@ def main() -> int:
         "artifacts": {
             "enhanced_image": {
                 "type": "image",
-                "path": str(enhanced_path),
+                "path": str(persist_enhanced),
+                "image_data_url": enhanced_data_url,
                 "description": "Enhanced 3T-like MRI image",
             },
             "comparison": {
                 "type": "image",
-                "path": str(comparison_path),
+                "path": str(persist_comparison),
+                "image_data_url": comparison_data_url,
                 "description": "Side-by-side: 64mT input (left) vs enhanced (right)",
             },
         },
