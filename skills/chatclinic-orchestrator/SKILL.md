@@ -181,6 +181,7 @@ Today the main classroom/core analysis path is:
 2. `fhir_browser_tool`
 3. `dicom_review_tool`
 4. `image_review_tool`
+5. `unsb_mri_enhance`
 
 ## Raster image rule
 
@@ -204,6 +205,27 @@ Examples:
 - JPG ultrasound frame -> `image_review_tool`, then ultrasound analysis tool
 
 Use raster-image tools to decide which downstream image-specific tool is most appropriate, rather than jumping directly to free-form interpretation.
+
+## MRI enhancement rule
+
+`unsb_mri_enhance` enhances ultra-low-field (64mT) MRI brain images to 3T-like quality using the Unpaired Neural Schrödinger Bridge (UNSB) model.
+
+Use `unsb_mri_enhance` when:
+
+- the user asks to "enhance", "improve", or "upscale" an MRI image
+- the user mentions keywords like "low-field", "64mT", "ULF", "화질 향상", "개선"
+- a raster image has already been reviewed via `image_review_tool` and the user requests enhancement
+
+Preferred MRI enhancement sequence:
+
+1. `image_review_tool` (first-pass metadata and preview)
+2. `unsb_mri_enhance` (GPU preferred, CPU fallback available but slower)
+
+Examples:
+
+- "enhance this MRI" -> `unsb_mri_enhance`
+- "이 MRI 화질 향상시켜줘" -> `unsb_mri_enhance`
+- PNG brain MRI uploaded, user says "make it clearer" -> `image_review_tool`, then `unsb_mri_enhance`
 
 As more tools are added, the orchestrator should choose among them by registry metadata and question context.
 
