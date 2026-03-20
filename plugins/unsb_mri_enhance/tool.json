@@ -1,0 +1,23 @@
+{
+    "name": "unsb_mri_enhance",
+    "team": "bispl",
+    "task_type": "image-restoration",
+    "modality": "medical-image",
+    "approval_required": true,
+    "entrypoint": "run.py",
+    "description": "Enhances ultra-low-field (64mT) MRI brain images to 3T-like quality using Unpaired Neural Schrödinger Bridge (UNSB).",
+    "keywords": ["mri", "enhance", "enhancement", "low-field", "ulf", "brain", "super-resolution", "unsb", "64mT", "3T", "향상", "개선", "화질"],
+    "recommended_stage": "post-intake",
+    "priority": 90,
+    "produces": ["enhanced_image", "comparison"],
+    "consumes": ["medical-image"],
+    "runtime": {
+      "host_compatible": ["cpu", "gpu"],
+      "supported_accelerators": ["gpu", "cpu"],
+      "preferred_accelerator": "gpu",
+      "requires_gpu": true,
+      "allow_cpu_fallback": true,
+      "estimated_runtime_sec": 60,
+      "notes": "GPU strongly preferred. CPU fallback works but is significantly slower."
+    }
+  }

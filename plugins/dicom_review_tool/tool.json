@@ -7,6 +7,7 @@
   "entrypoint": "run.py",
   "description": "Build DICOM Review artifacts including metadata, grouped series, and image preview state.",
   "keywords": [
+    "dcm",
     "dicom",
     "xray",
     "ct",
@@ -15,6 +16,7 @@
     "series",
     "metadata",
     "preview",
+    "이미지",
     "영상",
     "시리즈",
     "메타데이터"

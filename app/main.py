@@ -458,6 +458,8 @@ def _guess_modality(filename: str) -> tuple[str, str]:
         return "clinical-note", suffix.lstrip(".")
     if suffix in {".md", ".text"}:
         return "clinical-note", suffix.lstrip(".")
+    if suffix in {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}:
+        return "medical-image", suffix.lstrip(".")
     return "unknown", suffix.lstrip(".") or "unknown"
 
 
@@ -468,6 +470,13 @@ def _is_dicom_suffix(suffix: str) -> bool:
 def _is_raster_image_suffix(suffix: str) -> bool:
     return suffix.lower() in {"png", "jpg", "jpeg", "tif", "tiff"}
 
+
+def _is_dicom_suffix(suffix: str) -> bool:
+    return suffix.lower() in {"dcm", "dicom"}
+
+
+def _is_raster_image_suffix(suffix: str) -> bool:
+    return suffix.lower() in {"png", "jpg", "jpeg", "tif", "tiff"}
 
 def _looks_like_hl7_v2(decoded: str) -> bool:
     stripped = decoded.lstrip()
@@ -4010,6 +4019,7 @@ async def upload_source(files: list[UploadFile] = File(...)) -> IntakeSummaryRes
     if not files:
         raise ValueError("No files were uploaded")
     parsed_responses: list[IntakeSummaryResponse] = []
+    image_files: list[tuple[str, bytes, str, str]] = []
     dicom_files: list[tuple[str, bytes, str, str]] = []
     raster_image_files: list[tuple[str, bytes, str, str]] = []
     ndjson_files: list[tuple[str, bytes, str]] = []

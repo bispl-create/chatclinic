@@ -1783,6 +1783,25 @@ export default function Page() {
               { label: "Modality", value: toolResult.tool.modality ?? "n/a" },
             ])}
           </article>
+          {(() => {
+            const imageArtifacts = Object.entries(toolArtifacts).filter(
+              ([, v]) => v && typeof v === "object" && (v as Record<string, unknown>).type === "image" && (v as Record<string, unknown>).image_data_url,
+            );
+            if (!imageArtifacts.length) return null;
+            return imageArtifacts.map(([key, v]) => {
+              const art = v as { image_data_url: string; description?: string };
+              return (
+                <article key={`tool-img-${key}`} className="artifactCard">
+                  <strong>{art.description ?? key}</strong>
+                  <img
+                    src={art.image_data_url}
+                    alt={art.description ?? key}
+                    style={{ width: "100%", borderRadius: 6, marginTop: 8 }}
+                  />
+                </article>
+              );
+            });
+          })()}
           {reportSections ? (
             <article className="artifactCard">
               <strong>Structured report</strong>

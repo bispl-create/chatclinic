@@ -75,14 +75,20 @@ def _score_tool(tool: dict[str, Any], question: str, analysis: dict[str, Any], a
     recommended_stage = str(tool.get("recommended_stage", "") or "")
     tool_name = str(tool.get("name", "") or "")
 
-    if any(keyword and keyword in lowered for keyword in keywords):
-        score += 6
-        rationale.append("question keywords match the tool manifest")
+    keyword_hits = [kw for kw in keywords if kw and kw in lowered]
+    if keyword_hits:
+        score += 6 + 4 * (len(keyword_hits) - 1)
+        rationale.append(f"question keywords match the tool manifest ({', '.join(keyword_hits)})")
 
     modalities = _analysis_modalities(analysis)
     if modality and modality in modalities:
         score += 3
         rationale.append("tool modality matches the uploaded source")
+
+    source_suffix = str((analysis.get("source") or {}).get("file_type", "") or "").lower()
+    if source_suffix and keywords and source_suffix in keywords:
+        score += 4
+        rationale.append("uploaded file type matches the tool keywords")
 
     if active_view and recommended_stage and recommended_stage in active_view:
         score += 2
