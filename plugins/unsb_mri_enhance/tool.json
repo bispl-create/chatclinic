@@ -11,5 +11,13 @@
     "priority": 90,
     "produces": ["enhanced_image", "comparison"],
     "consumes": ["medical-image"],
-    "requires_gpu": true
+    "runtime": {
+      "host_compatible": ["cpu", "gpu"],
+      "supported_accelerators": ["gpu", "cpu"],
+      "preferred_accelerator": "gpu",
+      "requires_gpu": true,
+      "allow_cpu_fallback": true,
+      "estimated_runtime_sec": 60,
+      "notes": "GPU strongly preferred. CPU fallback works but is significantly slower."
+    }
   }

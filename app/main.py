@@ -2791,57 +2791,6 @@ def _summarize_dicom_series(files: list[tuple[str, bytes, str, str]]) -> IntakeS
     )
 
 
-def _summarize_raster_image(file_name: str, raw: bytes, suffix: str, source_path: Optional[str] = None) -> IntakeSummaryResponse:
-    meta: dict[str, Any] = {
-        "width": "not available",
-        "height": "not available",
-        "mode": "not available",
-        "format": suffix.upper(),
-        "file_size_bytes": len(raw),
-    }
-    preview: dict[str, Any] = {"available": False, "image_data_url": None}
-    try:
-        from PIL import Image as PILImage
-        import io as _io
-        img = PILImage.open(_io.BytesIO(raw))
-        meta["width"] = img.width
-        meta["height"] = img.height
-        meta["mode"] = img.mode
-        meta["format"] = img.format or suffix.upper()
-        img.thumbnail((512, 512))
-        buf = _io.BytesIO()
-        img.save(buf, format="PNG")
-        preview = {
-            "available": True,
-            "image_data_url": "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii"),
-        }
-    except Exception:
-        pass
-
-    summary = (
-        f"Raster image '{file_name}' received. "
-        f"Format: {meta['format']}, size: {meta.get('width', '?')} x {meta.get('height', '?')} px, "
-        f"color mode: {meta['mode']}. File size: {len(raw):,} bytes."
-    )
-    return IntakeSummaryResponse(
-        source=UploadedSourceSummary(
-            file_name=file_name,
-            file_type=suffix,
-            modality="medical-image",
-            size_bytes=len(raw),
-            status="parsed",
-        ),
-        grounded_summary=summary,
-        studio_cards=[{"id": "metadata", "title": "Image Review", "subtitle": "Metadata and preview"}],
-        artifacts={
-            "metadata": {**meta, "source_file_path": source_path, "preview": preview},
-            "qc": {"file_size_bytes": len(raw)},
-        },
-        sources=[],
-    )
-
-
-
 def _prefixed_response(response: IntakeSummaryResponse, source_index: int) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     prefixed_cards: list[dict[str, Any]] = []
     prefixed_artifacts: dict[str, Any] = {}
