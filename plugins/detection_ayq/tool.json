@@ -1,0 +1,38 @@
+{
+  "name": "detection_ayq_tool",
+  "team": "chatclinic-ayq",
+  "task_type": "medical-image-detection",
+  "modality": "medical-image",
+  "approval_required": false,
+  "entrypoint": "run.py",
+  "description": "Run AYQ DINO detection inference on uploaded medical images using the AYQ inference workflow.",
+  "keywords": [
+    "detection",
+    "bbox",
+    "lesion",
+    "cxr",
+    "xray",
+    "ct",
+    "mri",
+    "pathology",
+    "ayq",
+    "target class",
+    "aortic enlargement"
+  ],
+  "recommended_stage": "post-intake",
+  "consumes": ["medical-image"],
+  "produces": ["detections", "report_sections", "quality_assessment"],
+  "ui_card": "AYQ Detection",
+  "priority": 88,
+  "owner": "ayq",
+  "version": "0.1.0",
+  "runtime": {
+    "host_compatible": ["cpu", "gpu"],
+    "supported_accelerators": ["gpu", "cpu"],
+    "preferred_accelerator": "gpu",
+    "requires_gpu": false,
+    "allow_cpu_fallback": true,
+    "estimated_runtime_sec": 45,
+    "notes": "Mirrors AYQ/scripts/inference.sh workflow (image_demo + dino_ayq config/checkpoint)."
+  }
+}
