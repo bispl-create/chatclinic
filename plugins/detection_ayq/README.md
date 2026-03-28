@@ -36,6 +36,7 @@ plugins/detection_ayq/
 ├── samples/                     # Sample images
 └── scripts/
 ```
+Download the `dino_ayq.pth` checkpoint from [this Google Drive link](https://drive.google.com/file/d/1YQVADnQL9pSTls9SuJn9ihEESVOZedUr/view?usp=sharing) and place it in the `plugins/detection_ayq/checkpoints/` folder.
 
 ## Example Usage
 
