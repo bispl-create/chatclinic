@@ -28,11 +28,11 @@
   "version": "0.1.0",
   "runtime": {
     "host_compatible": ["cpu", "gpu"],
-    "supported_accelerators": ["gpu", "cpu"],
-    "preferred_accelerator": "gpu",
+    "supported_accelerators": ["cpu", "gpu"],
+    "preferred_accelerator": "cpu",
     "requires_gpu": false,
     "allow_cpu_fallback": true,
     "estimated_runtime_sec": 45,
-    "notes": "Mirrors AYQ/scripts/inference.sh workflow (image_demo + dino_ayq config/checkpoint)."
+    "notes": "Runs on both CPU and GPU hosts without requiring GPU acceleration."
   }
 }
