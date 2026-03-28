@@ -1,0 +1,6 @@
+# Additional runtime dependencies
+
+pycocotools
+scipy
+shapely
+terminaltables
